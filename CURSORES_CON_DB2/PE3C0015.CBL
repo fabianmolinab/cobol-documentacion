@@ -13,7 +13,7 @@
       *                                                                *
       *                         DESCRIPCION:                           *
       *                         ============                           *
-      *   PROGRAMA PADRE QUE HACE UNA CONSULTA DB2 POR MEDIO DE 
+      *   PROGRAMA PADRE QUE HACE UNA CONSULTA DB2 POR MEDIO DE
       *   CURSORES                                                     *
       ******************************************************************
 
@@ -127,13 +127,13 @@
       ******************************************************************
        000000-INICIO.
 
-           PERFORM 000010-ABRIR-ARCHIVOS    
+           PERFORM 000010-ABRIR-ARCHIVOS
            PERFORM 000020-LEER-ARCHIVOS
            PERFORM 000030-GENERAR-CABECERA.
 
       ******************************************************************
       *                     000010-ABIR-ARCHIVO                        *
-      *   - SE ABRIR EL ARCHIVO DE ENTRADA Y EL DE SALIDA               *
+      *   - SE ABRIR EL ARCHIVO DE ENTRADA Y EL DE SALIDA              *
       ******************************************************************
        000010-ABRIR-ARCHIVOS.
 
@@ -156,7 +156,8 @@
            INITIALIZE REG-ENTRADA1
            READ ENTRADA
               AT END
-                 SET SI-FIN-DATA1 TO TRUE
+                 SET SI-FIN-DATA1    TO TRUE
+
               NOT AT END
                  ADD 1               TO WS-LEIDOS-DATA
            END-READ
@@ -184,13 +185,13 @@
              MOVE REG-CLIENTE  TO AI0-CLIENTE
              MOVE REG-PRODUCTO TO AI0-PRODUCTO
              MOVE REG-CONTRATO TO AI0-CONTRATO
+
              CALL  'PE3C0016' USING CAI-PE9CCAI0
 
              EVALUATE AI0-COD-RET
                WHEN '00'
                    PERFORM 100400-GENERAR-CUERPO
-
-               WHEN '20'
+               WHEN '35'
                    DISPLAY 'NO SE ENCUENTRA EL CLIENTE'
                WHEN OTHER
                    PERFORM 200001-INI-ERR-PRO
@@ -206,9 +207,9 @@
       *   PASO Y LOS DE SALIDA A PARTIR DEL VALOR Y CONTRATO           *
       ******************************************************************
        100400-GENERAR-CUERPO.
-             MOVE REG-CLIENTE   TO WS-CLIENTE
+             MOVE REG-CLIENTE       TO WS-CLIENTE
              MOVE AI0-FECHA         TO WS-FECHA
-             MOVE REG-CONTRATO  TO WS-CONTRATO
+             MOVE REG-CONTRATO      TO WS-CONTRATO
              MOVE AI0-VALOR         TO WS-VALOR
              MOVE WS-CUERPO         TO REG-SALIDA
              PERFORM 999999-ESCRIBIR.

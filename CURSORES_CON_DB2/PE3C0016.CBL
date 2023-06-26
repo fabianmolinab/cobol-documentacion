@@ -81,7 +81,6 @@
 
        01 WS-TABLAS.
            05 WS-TABLA-DATAPHON OCCURS 20 TIMES INDEXED BY I-IND.
-               07 WS-TABLA-CLIENTE                  PIC X(8).
                07 WS-TABLA-FECHA                    PIC X(10).
 
            EXEC SQL
@@ -103,21 +102,19 @@
                SELECT *
                FROM MAINTAIN.DTPR.PRDTW02
                WHERE W02_CLIENTE   =  :W02-CLIENTE
-               AND   W02_FECHA_MOV =  :W02-FECHA-MOV
+               AND   W02_CONTRATO  =  :W02-CONTRATO
            END-EXEC.
 
       ******************************************************************
       ******              DECLARACION DEL CURSOR2               *******
            EXEC SQL
                DECLARE CURSOR_2 CURSOR FOR
-               SELECT *
+               SELECT W03_FECHA
                FROM MAINTAIN.DTPR.PRDTW03
-               WHERE W03_CLIENTE   =  :W03-CLIENTE
+               WHERE W03_CLIENTE   =  :W02-CLIENTE
                AND   W03_PRODUCTO  =  :W03-PRODUCTO
-               AND   W03_FECHA     =  :W03-FECHA
            END-EXEC.
        LINKAGE SECTION.
-
        COPY PE9CCAI0.
 
       ******************************************************************
@@ -125,7 +122,7 @@
       ******************************************************************
        PROCEDURE DIVISION USING CAI-PE9CCAI0.
            PERFORM 000000-INICIO
-           PERFORM 100000-PROCESO
+           PERFORM 100000-PROCESO  UNTIL SI-FIN-CURSOR-1
            PERFORM 200000-FINAL.
       ******************************************************************
       *                     000000-INICIO                              *
@@ -134,17 +131,19 @@
       ******************************************************************
        000000-INICIO.
            MOVE  '00'           TO AI0-COD-RET
+           SET NO-FIN-DATA      TO TRUE
            SET NO-FIN-CURSOR-1  TO TRUE
            SET NO-FIN-CURSOR-2  TO TRUE
            INITIALIZE WS-TABLAS
+           INITIALIZE WS-CONTADOR
            PERFORM 000001-VALIDACION-DE-VARIABLES
            PERFORM 000002-ABRIR-CURSOR-1
            PERFORM 000003-ABRIR-CURSOR-2
            PERFORM 000004-FETCH-CURSOR-2
            PERFORM 000005-CARGAR-TABLA VARYING I-IND FROM 1 BY 1
-                   UNTIL I-IND > 20 OR SI-FIN-CURSOR-1
+                   UNTIL I-IND > 20 OR SI-FIN-CURSOR-2
            PERFORM  100005-CERRAR-CURSOR-2.
-       
+
        000001-VALIDACION-DE-VARIABLES.
            IF AI0-CLIENTE IS NOT NUMERIC
              MOVE '10'          TO     AI0-COD-RET
@@ -165,33 +164,38 @@
            END-IF.
 
        000002-ABRIR-CURSOR-1.
+           MOVE AI0-CLIENTE            TO W02-CLIENTE
+           MOVE AI0-CONTRATO           TO W02-CONTRATO
+
            EXEC SQL
                OPEN CURSOR_1
            END-EXEC
 
       *    VALIDACION DE ERRORES
            IF SQLCODE NOT EQUAL ZEROS
-               MOVE '10'                   TO A10-COD-RET
-               MOVE 'ERROR EN EL CURSOR 1' TO A10-OFI2-ERROR2
+               MOVE '10'                   TO AI0-COD-RET
+               MOVE 'ERROR EN EL CURSOR 1' TO AI0-OFI2-ERROR2
                PERFORM 200000-FINAL
            END-IF.
 
        000003-ABRIR-CURSOR-2.
+           MOVE AI0-PRODUCTO           TO W03-PRODUCTO
+
            EXEC SQL
                OPEN CURSOR_2
            END-EXEC
 
       *    VALIDACION DE ERRORES
            IF SQLCODE NOT EQUAL ZEROS
-               MOVE '10'         TO A10-COD-RET
-               MOVE 'ERROR EN EL CURSOR 2' TO A10-OFI2-ERROR2
+               MOVE '10'                   TO AI0-COD-RET
+               MOVE 'ERROR EN EL CURSOR 2' TO AI0-OFI2-ERROR2
                PERFORM 200000-FINAL
            END-IF.
 
        000004-FETCH-CURSOR-2.
            EXEC SQL
                FETCH CURSOR_2
-                   INTO :W03-CLIENTE, :W03-FECHA
+                   INTO :W03-FECHA
            END-EXEC.
            EVALUATE SQLCODE
               WHEN   ZEROS
@@ -205,7 +209,6 @@
            END-EVALUATE.
 
        000005-CARGAR-TABLA.
-           MOVE  W03-CLIENTE      TO WS-TABLA-CLIENTE(I-IND)
            MOVE  W03-FECHA        TO WS-TABLA-FECHA(I-IND)
            PERFORM 000004-FETCH-CURSOR-2.
       ******************************************************************
@@ -214,10 +217,46 @@
       *   DE BASEDATA, LO ORDENA POR OFICINA                           *
       ******************************************************************
        100000-PROCESO.
-           MOVE AI0-CLIENTE            TO W02-CLIENTE
-           MOVE AI0-CONTRATO           TO W02-CONTRATO
-           MOVE AI0-PRODUCTO           TO W03-PRODUCTO
-           PERFORM 100001-FETCH-CURSOR-1
+           PERFORM 100001-FETCH-CURSOR-1.
+       100001-FETCH-CURSOR-1.
+           EXEC SQL
+               FETCH CURSOR_1
+               INTO :W02-CLIENTE,
+                    :W02-FECHA-MOV,
+                    :W02-CONTRATO,
+                    :W02-VALOR
+           END-EXEC
+           EVALUATE SQLCODE
+              WHEN ZEROS
+                   PERFORM 100002-BUSCAR-FECHA
+                   ADD 1                          TO WS-CONTADOR
+               WHEN +100
+                    SET SI-FIN-CURSOR-1 TO TRUE
+                    IF WS-CONTADOR = ZEROS
+                       MOVE '35'                  TO AI0-COD-RET
+                       MOVE 'NO ENCONTRE CURSOR1' TO AI0-OFI2-ERROR1
+                   END-IF
+               WHEN OTHER
+                   MOVE '30'                      TO AI0-COD-RET
+                   MOVE 'ERROR CONEXION BD'       TO AI0-OFI2-ERROR1
+                   MOVE SQLCODE                   TO AI0-MAS-SQLCODE
+           END-EVALUATE.
+
+       100002-BUSCAR-FECHA.
+            SET I-IND TO 1
+
+           SEARCH WS-TABLA-DATAPHON
+               AT END
+                    CONTINUE
+               WHEN WS-TABLA-FECHA(I-IND)  =     W02-FECHA-MOV
+                    SET SI-FIN-DATA           TO    TRUE
+                    SET SI-FIN-CURSOR-1       TO    TRUE
+           END-SEARCH.
+
+      ******************************************************************
+      *                       200000-FINAL                             *
+      ******************************************************************
+       200000-FINAL.
            IF SI-FIN-DATA
                MOVE W02-CLIENTE        TO AI0-CLIENTE-SAL
                MOVE W02-FECHA-MOV      TO AI0-FECHA
@@ -227,57 +266,29 @@
                MOVE '35'               TO AI0-COD-RET
                MOVE 'NO ENCONTRE REG ' TO AI0-OFI2-ERROR1
                MOVE W02-FECHA-MOV      TO AI0-OFI2-ERROR2
-           
-           END-IF.
-       100001-FETCH-CURSOR-1.
-           EXEC SQL
-               FETCH CURSOR_1
-                   INTO :WO2-CLIENTE, 
-                        :W02-FECHA-MOV, 
-                        :W02-CONTRATO,
-                        :W02-VALOR
-           END-EXEC.
-           EVALUATE SQLCODE
-              WHEN ZEROS
-                   PERFORM 100002-BUSCAR-FECHA 
-                   ADD 1                          TO WS-CONTADOR
-               WHEN +100
-                    SET SI-FIN-CURSOR-1 TO TRUE
-                    IF WS-CONTADOR = ZEROS
-                       MOVE '25'                  TO AI0-COD-RET
-                       MOVE 'NO ENCONTRE CURSOR1' TO AI0-OFI2-ERROR1
-                   END-IF
-               WHEN OTHER
-                   MOVE '30'                      TO AI0-COD-RET
-                   MOVE 'ERROR CONEXION BD'       TO AI0-OFI2-ERROR1
-                   MOVE SQLCODE                   TO AI0-MAS-SQLCODE
-           END-EVALUATE.
-       
-       100002-BUSCAR-FECHA.
-            SET I-IND TO 1
+           END-IF
 
-           SEARCH WS-TABLA-DATAPHON
-               AT END
-                    CONTINUE
-               WHEN WS-TABLA-DATAPHON(I-IND)  =     W02-FECHA-MOV
-                    SET SI-FIN-DATA           TO    TRUE
-                    SET SI-FIN-CURSOR-1       TO    TRUE
-           END-SEARCH.
-
-       
-      ******************************************************************
-      *                       200000-FINAL                             *
-      ******************************************************************
-       200000-FINAL.
            PERFORM 100004-CERRAR-CURSOR-1
-           
+
            GOBACK.
        100004-CERRAR-CURSOR-1.
            EXEC SQL
                CLOSE CURSOR_1
-           END-EXEC.
+           END-EXEC
+
+           IF SQLCODE NOT EQUAL ZEROS
+               MOVE '100'                        TO AI0-COD-RET
+               MOVE 'ERR CERRANDO EL CURSOR1'    TO AI0-OFI2-ERROR2
+      *        PERFORM 200000-FINAL
+           END-IF.
 
        100005-CERRAR-CURSOR-2.
            EXEC SQL
                CLOSE CURSOR_2
-           END-EXEC.
+           END-EXEC
+
+           IF SQLCODE NOT EQUAL ZEROS
+               MOVE '100'                        TO AI0-COD-RET
+               MOVE 'ERR CERRANDO EL CURSOR2'    TO AI0-OFI2-ERROR2
+               PERFORM 200000-FINAL
+           END-IF.

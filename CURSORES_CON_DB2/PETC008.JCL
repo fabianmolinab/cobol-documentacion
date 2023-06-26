@@ -28,7 +28,7 @@
 //SYSIN    DD *
      SORT FIELDS=(19,8,CH,A)
      OUTREC FIELDS=(19,8,1,18)
-//TP000002 EXEC PGM=PE3C0015
+//TP000002 EXEC PGM=PE3C0013
 //SYSPRINT DD  SYSOUT=*                                                 
 //SYSTSPRT DD  SYSOUT=*                                                 
 //SYSOUT   DD  SYSOUT=*                                                 
