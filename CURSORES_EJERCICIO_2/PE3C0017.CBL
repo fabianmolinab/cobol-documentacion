@@ -117,42 +117,42 @@
       ******************************************************************
        PROCEDURE DIVISION.
 
-           PERFORM 000000-INICIO
-           PERFORM 100000-PROCESO UNTIL SI-FIN-DATA1
-           PERFORM 200000-FINAL.
+           PERFORM 01-INICIO
+           PERFORM 02-PROCESO UNTIL SI-FIN-DATA1
+           PERFORM 03-FINAL.
       ******************************************************************
       *                     000000-INICIO                              *
       *   - ABRIR ARCHIVOS DE ENTRADA Y SALIDA                         *
       *   - PRIMERA LECTURA DEL ARCHIVO DE ENTRADA                     *
       ******************************************************************
-       000000-INICIO.
+       01-INICIO.
 
-           PERFORM 000010-ABRIR-ARCHIVOS
-           PERFORM 000020-LEER-ARCHIVOS
-           PERFORM 000030-GENERAR-CABECERA.
+           PERFORM 011-ABRIR-ARCHIVOS
+           PERFORM 012-LEER-ARCHIVOS
+           PERFORM 013-GENERAR-CABECERA.
 
       ******************************************************************
       *                     000010-ABIR-ARCHIVO                        *
       *   - SE ABRIR EL ARCHIVO DE ENTRADA Y EL DE SALIDA              *
       ******************************************************************
-       000010-ABRIR-ARCHIVOS.
+       011-ABRIR-ARCHIVOS.
 
            OPEN INPUT ENTRADA
            IF WS-ESTADO NOT = '00' AND NOT = '97'
-              PERFORM 200001-INI-ERR-PRO
+              PERFORM 031-INI-ERR-PRO
               DISPLAY 'ERROR ABRIENDO ARCHIVO ENTRADA' WS-ESTADO
-              PERFORM 200002-FIN-ERR-PRO
+              PERFORM 032-FIN-ERR-PRO
            END-IF
 
            OPEN OUTPUT SALIDA
            IF WS-ESTADO NOT = '00' AND NOT = '97'
               CLOSE ENTRADA
-              PERFORM 200001-INI-ERR-PRO
+              PERFORM 031-INI-ERR-PRO
               DISPLAY 'ERROR ABRIENDO ARCHIVO INFORM ' WS-ESTADO
-              PERFORM 200002-FIN-ERR-PRO
+              PERFORM 032-FIN-ERR-PRO
            END-IF.
 
-       000020-LEER-ARCHIVOS.
+       012-LEER-ARCHIVOS.
            INITIALIZE REG-ENTRADA1
            READ ENTRADA
               AT END
@@ -162,83 +162,55 @@
                  ADD 1               TO WS-LEIDOS-DATA
            END-READ
            IF WS-ESTADO NOT = '00' AND NOT = '10'
-              PERFORM 200001-INI-ERR-PRO
+              PERFORM 031-INI-ERR-PRO
               DISPLAY 'ERROR LEYENDO ARCHIVO DATAPER' WS-ESTADO
-              PERFORM 200002-FIN-ERR-PRO
+              PERFORM 032-FIN-ERR-PRO
            END-IF.
-       000030-GENERAR-CABECERA.
+       013-GENERAR-CABECERA.
            MOVE WS-TITULO1 TO REG-SALIDA
-           PERFORM 999999-ESCRIBIR
+           PERFORM 99-ESCRIBIR
            MOVE WS-TITULO2 TO REG-SALIDA
-           PERFORM 999999-ESCRIBIR.
+           PERFORM 99-ESCRIBIR.
 
       ******************************************************************
       *                        100000-PROCESO                          *
       ******************************************************************
-       100000-PROCESO.
-           PERFORM 100001-CARGUE-VARIABLES
+       02-PROCESO.
+           PERFORM 021-CARGUE-VARIABLES
 
-           PERFORM 000020-LEER-ARCHIVOS.
+           PERFORM 012-LEER-ARCHIVOS.
 
-       100001-CARGUE-VARIABLES.
+       021-CARGUE-VARIABLES.
            INITIALIZE CAI-PE9CCAI0
              MOVE REG-CLIENTE  TO AI0-CLIENTE
              MOVE REG-PRODUCTO TO AI0-PRODUCTO
              MOVE REG-CONTRATO TO AI0-CONTRATO
 
-             CALL  'PE3C0016' USING CAI-PE9CCAI0
+             CALL  'PE3C0018' USING CAI-PE9CCAI0
 
              EVALUATE AI0-COD-RET
                WHEN '00'
-                   PERFORM 100400-GENERAR-CUERPO
+                   PERFORM 66-GENERAR-CUERPO
                WHEN '35'
                    DISPLAY 'NO SE ENCUENTRA EL CLIENTE'
                WHEN OTHER
-                   PERFORM 200001-INI-ERR-PRO
+                   PERFORM 031-INI-ERR-PRO
                    DISPLAY 'ERROR DE RUTINA CAI-PE9CCAI0' AI0-COD-RET
                    DISPLAY 'DESCRIPCION 1' AI0-OFI2-ERROR1
-                   PERFORM 200002-FIN-ERR-PRO
+                   PERFORM 032-FIN-ERR-PRO
              END-EVALUATE.
-      ******************************************************************
-      *                                                                *
-      *                      100400-GENERAR-CUERPO                     *
-      *                                                                *
-      *   SE CREA EL CONTENIDO EL CUAL CONTIENE LAS COLUMNAS DE CLIENTE,
-      *   PASO Y LOS DE SALIDA A PARTIR DEL VALOR Y CONTRATO           *
-      ******************************************************************
-       100400-GENERAR-CUERPO.
-             MOVE REG-CLIENTE       TO WS-CLIENTE
-             MOVE AI0-FECHA         TO WS-FECHA
-             MOVE REG-CONTRATO      TO WS-CONTRATO
-             MOVE AI0-VALOR         TO WS-VALOR
-             MOVE WS-CUERPO         TO REG-SALIDA
-             PERFORM 999999-ESCRIBIR.
-
-      ******************************************************************
-      *                        999999-ESCRIBIR                         *
-      ******************************************************************
-       999999-ESCRIBIR.
-           WRITE REG-SALIDA
-           IF WS-ESTADO NOT = '00'
-              PERFORM 200001-INI-ERR-PRO
-              DISPLAY 'ERROR WRITE ARCHIVO INFORME ' WS-ESTADO
-              PERFORM 200002-FIN-ERR-PRO
-           ELSE
-      *       INITIALIZE WS-INFORME
-              ADD 1   TO WS-ESCRITOS
-           END-IF.
 
       ******************************************************************
       *                       200000-FINAL                             *
       ******************************************************************
-       200000-FINAL.
+       03-FINAL.
            CLOSE SALIDA ENTRADA
-           PERFORM 200003-MSGFINPRO
+           PERFORM 032-FIN-ERR-PRO
            STOP RUN.
       ******************************************************************
       *                      200001-INI-ERR-PRO                        *
       ******************************************************************
-       200001-INI-ERR-PRO.
+       031-INI-ERR-PRO.
            DISPLAY '************* TERMINACION ANORMAL *************'
            DISPLAY 'LEIDOS ENTRADA1       : ' WS-LEIDOS-DATA
            DISPLAY 'REGISTROS ESCRITOS    : ' WS-ESCRITOS.
@@ -246,13 +218,39 @@
       ******************************************************************
       *                       200002-FIN-ERR-PRO                       *
       ******************************************************************
-       200002-FIN-ERR-PRO.
+       032-FIN-ERR-PRO.
            MOVE 12 TO RETURN-CODE
            STOP RUN.
       ******************************************************************
       *                    200003-MSGFINPRO                            *
       ******************************************************************
-       200003-MSGFINPRO.
+       034-MSGFINPRO.
            DISPLAY 'LEIDOS ENTRADA1       : ' WS-LEIDOS-DATA
            DISPLAY 'REGISTROS ESCRITOS    : ' WS-ESCRITOS.
       ******************************************************************
+      ******************************************************************
+      *                                                                *
+      *                    66-GENERAR-CUERPO
+      ******************************************************************
+       66-GENERAR-CUERPO.
+             MOVE REG-CLIENTE       TO WS-CLIENTE
+             MOVE AI0-FECHA         TO WS-FECHA
+             MOVE REG-CONTRATO      TO WS-CONTRATO
+             MOVE AI0-VALOR         TO WS-VALOR
+             MOVE WS-CUERPO         TO REG-SALIDA
+             PERFORM 99-ESCRIBIR.
+
+      ******************************************************************
+      *                        999999-ESCRIBIR                         *
+      ******************************************************************
+       99-ESCRIBIR.
+           WRITE REG-SALIDA
+           IF WS-ESTADO NOT = '00'
+              PERFORM 031-INI-ERR-PRO
+              DISPLAY 'ERROR WRITE ARCHIVO INFORME ' WS-ESTADO
+              PERFORM 032-FIN-ERR-PRO
+           ELSE
+      *       INITIALIZE WS-INFORME
+              ADD 1   TO WS-ESCRITOS
+           END-IF.
+
