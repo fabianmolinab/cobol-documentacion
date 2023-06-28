@@ -123,16 +123,17 @@
            05 WS-ERROR-1                        PIC X(20).
            05 WS-ERROR-2                        PIC X(20).
 
-       LINKAGE SECTION.
        01 REG-PARM.
-           05 PARM-LONG                  PIC X(02).
-           05 PARM-AMBI                  PIC X(01).
-           05 PARM-ARCH                  PIC X(38).
+           05 PARM-LONG                         PIC X(02).
+           05 PARM-AMBI                         PIC X(01) VALUE 'P'.
+           05 PARM-ARCH                         PIC X(34)
+           VALUE 'COBP.PE.FWD1.PPED003.SORT.PERSONAS'.
 
+       LINKAGE SECTION.
       ******************************************************************
       *                       PROCEDURE DIVISION                       *
       ******************************************************************
-       PROCEDURE DIVISION USING REG-PARM.
+       PROCEDURE DIVISION.
            PERFORM 01-INICIO
            PERFORM 02-PROCESO
            PERFORM 03-FINAL.
@@ -160,7 +161,7 @@
        011-INICIALIZACION-DE-VARIABLES.
            SET NO-FIN-CURSOR    TO     TRUE
            INITIALIZE WS-TABLAS
-      *    INITIALIZE WS-CONTADOR
+           INITIALIZE WS-CONTADOR
            INITIALIZE PRDTW03.
 
        012-ABRIR-ARCHIVOS.
@@ -218,7 +219,7 @@
 
            MOVE '//'                   TO LINEA-01-20(1:2)
            MOVE PARM-AMBI              TO LINEA-01-20(3:1)
-           MOVE 'TPA121A'              TO LINEA-01-20(4:7)
+           MOVE 'PPED0012'             TO LINEA-01-20(4:7)
            MOVE ' JOB CLASS'           TO LINEA-01-20(11:10)
            MOVE '=B,REGION=0M,MSGCLAS' TO LINEA-21-40
            MOVE 'S=H,MSGLEVEL=(1,1)'   TO LINEA-41-60
@@ -265,15 +266,14 @@
            MOVE '*'                    TO LINEA-61-72(12:1)
            PERFORM 99-ESCRIBIR
 
-           MOVE '//* REALIZO     : LU' TO LINEA-01-20
-           MOVE 'IS GIOVANNI MU#OZ GU' TO LINEA-21-40
-           MOVE 'TIERREZ (GESFOR COLO' TO LINEA-41-60
-           MOVE 'MBIA)'                TO LINEA-61-72(1:5)
+           MOVE '//* REALIZO     : FA' TO LINEA-01-20
+           MOVE 'BIAN MOLINA         ' TO LINEA-21-40
+           MOVE '(INETUM,COLOMBIA)   ' TO LINEA-41-60
            MOVE '*'                    TO LINEA-61-72(12:1)
            PERFORM 99-ESCRIBIR
 
-           MOVE '//* FECHA       : SE' TO LINEA-01-20
-           MOVE 'PTIEMBRE DE 2010.'    TO LINEA-21-40
+           MOVE '//* FECHA       : JU' TO LINEA-01-20
+           MOVE 'NIO DE 2023.'         TO LINEA-21-40
            MOVE '*'                    TO LINEA-61-72(12:1)
            PERFORM 99-ESCRIBIR
 
@@ -341,8 +341,8 @@
            MOVE '.TP.FJS'                TO LINEA-01-20(14:7)
            MOVE 'M1.TPA1214.TP120119.'   TO LINEA-21-40
            MOVE 'EXT'                    TO LINEA-41-60(1:3)
-           MOVE WS-TABLA-PRODUCTO(I-IND) TO LINEA-41-60(4:4)
-           MOVE '.SORT'                  TO LINEA-41-60(8:5)
+           MOVE WS-TABLA-PRODUCTO(I-IND) TO LINEA-41-60(4:2)
+           MOVE '.SORT'                  TO LINEA-41-60(6:5)
            PERFORM 99-ESCRIBIR.
 
       ******************************************************************
@@ -392,8 +392,8 @@
            MOVE '//SORTIN   DD  DSN='  TO LINEA-01-20(1:19)
            MOVE PARM-ARCH(1:1)         TO LINEA-01-20(20:1)
            MOVE PARM-ARCH(2:20)        TO LINEA-21-40
-           MOVE PARM-ARCH(22:17)       TO LINEA-41-60(1:17)
-           MOVE ','                    TO LINEA-41-60(18:1)
+           MOVE PARM-ARCH(22:13)       TO LINEA-41-60(1:13)
+           MOVE ','                    TO LINEA-41-60(14:1)
            PERFORM 99-ESCRIBIR
 
            MOVE '//             DISP=' TO LINEA-01-20
@@ -410,9 +410,7 @@
 
            MOVE SPACES                 TO LINEA-01-20(1:2)
            MOVE CTE-SORT-FIELDS        TO LINEA-01-20(3:11)
-           MOVE '=(1,13,'              TO LINEA-01-20(14:7)
-           MOVE 'CH,A,17,10,CH,A,45,1' TO LINEA-21-40
-           MOVE '6,CH,A)'              TO LINEA-41-60
+           MOVE '=COPY'                TO LINEA-01-20(14:5)
            PERFORM 99-ESCRIBIR
 
            PERFORM 027-SEPARACION-ARCHIVOS
@@ -427,16 +425,16 @@
       *   SE DEFINEN LOS NOMBRES DE LOS ARCHIVOS Y SUS ATRIBUTOS       *
       ******************************************************************
        026-ARCHIVOS-SALIDA.
-           MOVE '//'                      TO LINEA-01-20(1:2)
-           MOVE WS-TABLA-PRODUCTO(I-IND)  TO LINEA-01-20(3:4)
-           MOVE '     DD  DSN=C'          TO LINEA-01-20(7:14)
+           MOVE '//C'                     TO LINEA-01-20(1:3)
+           MOVE WS-TABLA-PRODUCTO(I-IND)  TO LINEA-01-20(4:4)
+           MOVE '    DD  DSN=C'           TO LINEA-01-20(8:13)
            MOVE 'OB'                      TO LINEA-21-40(1:2)
            MOVE PARM-AMBI                 TO LINEA-21-40(3:1)
            MOVE '.TP.FJSM1.TPA1214'       TO LINEA-21-40(4:17)
            MOVE '.TP120119.EXT'           TO LINEA-41-60(1:13)
-           MOVE WS-TABLA-PRODUCTO(I-IND)  TO LINEA-41-60(14:4)
-           MOVE '.SO'                     TO LINEA-41-60(18:3)
-           MOVE 'RT,'                     TO LINEA-61-72
+           MOVE WS-TABLA-PRODUCTO(I-IND)  TO LINEA-41-60(14:2)
+           MOVE '.SORT'                   TO LINEA-41-60(16:5)
+           MOVE ','                       TO LINEA-61-72(1:1)
            PERFORM 99-ESCRIBIR
 
            MOVE '//             DISP=' TO LINEA-01-20
@@ -461,17 +459,17 @@
       *   POR CADA FONDO                                               *
       ******************************************************************
        027-SEPARACION-ARCHIVOS.
-           MOVE '  OUTFIL FNAMES='          TO LINEA-01-20(1:16)
-           MOVE WS-TABLA-PRODUCTO(I-IND)    TO LINEA-01-20(17:4)
-           MOVE ','                         TO LINEA-21-40
+           MOVE ' OUTFIL FNAMES=C'          TO LINEA-01-20(1:17)
+           MOVE WS-TABLA-PRODUCTO(I-IND)    TO LINEA-01-20(17:2)
+           MOVE ','                         TO LINEA-01-20(19:1)
            PERFORM 99-ESCRIBIR
 
-           MOVE '         INCLUDE=(1,'          TO LINEA-01-20
-           MOVE '4,CH,EQ,C'                     TO LINEA-21-40(1:9)
+           MOVE '         INCLUDE=(9,'          TO LINEA-01-20
+           MOVE '2,CH,EQ,C'                     TO LINEA-21-40(1:9)
            MOVE CTE-COMILLA                     TO LINEA-21-40(10:1)
-           MOVE WS-TABLA-PRODUCTO(I-IND)        TO LINEA-21-40(11:4)
-           MOVE CTE-COMILLA                     TO LINEA-21-40(15:1)
-           MOVE ')'                             TO LINEA-21-40(16:1)
+           MOVE WS-TABLA-PRODUCTO(I-IND)        TO LINEA-21-40(11:2)
+           MOVE CTE-COMILLA                     TO LINEA-21-40(13:1)
+           MOVE ')'                             TO LINEA-21-40(14:1)
            PERFORM 99-ESCRIBIR.
 
       ******************************************************************
