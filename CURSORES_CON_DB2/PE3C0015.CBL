@@ -177,7 +177,6 @@
       ******************************************************************
        100000-PROCESO.
            PERFORM 100001-CARGUE-VARIABLES
-
            PERFORM 000020-LEER-ARCHIVOS.
 
        100001-CARGUE-VARIABLES.
